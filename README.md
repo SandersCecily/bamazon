@@ -7,7 +7,7 @@ This application is a command line interface (CLI APP) is like a mini version of
 This CLI application walks the user through what they are trying to accomplish. Refer to the video below to get a better understanding of how it does this.
 
 
-[![Youtube video demo](http://img.youtube.com/vi/e7BP1sf-Ry4&feature=youtu.be/0.jpg)](http://www.youtube.com/watch?v=e7BP1sf-Ry4&feature=youtu.be)
+[![Youtube video demo](http://img.youtube.com/vi/e7BP1sf-Ry4&feature=youtu.be/0.jpg)](hhttps://youtu.be/5bVdUOphMLU)
 
 
 ## Required packages
