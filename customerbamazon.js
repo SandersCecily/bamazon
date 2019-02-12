@@ -1,20 +1,4 @@
-/*
-5. Then create a Node application called `bamazonCustomer.js`. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
-
-6. The app should then prompt users with two messages.
-
-   * The first should ask them the ID of the product they would like to buy.
-   * The second message should ask how many units of the product they would like to buy.
-
-7. Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
-
-   * If not, the app should log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
-
-8. However, if your store _does_ have enough of the product, you should fulfill the customer's order.
-   * This means updating the SQL database to reflect the remaining quantity.
-   * Once the update goes through, show the customer the total cost of their purchase.
-*/
-
+require('dotenv').config()
 let inquirer = require("inquirer");
 let mysql = require("mysql");
 
@@ -24,15 +8,18 @@ let connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "anime909",
-    database: "schema.sql"
+    password: process.env.DB_PASS,
+    database: "bamazon"
   });
 
+ connection.connect(function(err) {
+     if (err) throw err;
+    main();
+  });
 
 function main(){
-
-    inquirer
-     .prompt([
+    printmeout();
+    inquirer.prompt([
         {
             name: "itemid",
             type: "input",
@@ -45,15 +32,55 @@ function main(){
         }
     ])
     .then(function(answer) {
-        connection.query("SELECT * WHERE item_id = " + answer.itemid + "FROM inventory",function(err, res){
-
-        })
-        
-    }
+        connection.query("SELECT * FROM inventory WHERE item_id = " + answer.itemid,function(err, res){
+            if (err) throw err;
+            if (answer.quantity>res[0].quanity){
+                console.log("Sorry, we cant complete that order.");
+                inquirer.prompt([
+                    {
+                        name: "retry",
+                        type: "confirm",
+                        message: "Did you want to place another order?"
+                    }
+                ]).then(function(answer){
+                    if (answer.retry){
+                        main();
+                    }else{
+                        connection.end();
+                    }
+                });  
+            }
+            else if (answer.quantity<res[0].quanity){
+                let invoice = (answer.quantity*res[0].price);
+                let newquan = res[0].quanity - answer.quantity;
+                connection.query("UPDATE inventory SET quanity = "+ newquan + " WHERE item_id = " + answer.itemid, function(err,res){
+                    console.log("Purchase successful!\n"
+                    + "Your total was: $" + invoice);
+                });
+                inquirer.prompt([
+                    {
+                        name: "retry",
+                        type: "confirm",
+                        message: "Did you want to place another order?"
+                    }
+                ]).then(function(answer){
+                    if (answer.retry){
+                        main();
+                    }else{
+                        connection.end();
+                    }
+                });  
+            }
+        });
+    });  
 } //end Main
 
 //print out data function
-function printmeout(data){
-    console.log("------------------------------------------------");
-    console.log(data.item_id + " | " + data.product_name + " | " + data.dept_name + " | " + data.price);
+function printmeout(){
+    connection.query("SELECT * FROM inventory", function(err, res) {
+        for (let i = 0; i < res.length; i++) {
+          console.log(res[i].item_id + " | " + res[i].product_name + " | " + res[i].dept_name + " | " + res[i].price);
+        }
+        console.log("-----------------------------------");
+      });
 }
